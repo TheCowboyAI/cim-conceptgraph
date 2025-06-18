@@ -25,6 +25,12 @@ use uuid::Uuid;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ConceptId(Uuid);
 
+impl Default for ConceptId {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ConceptId {
     pub fn new() -> Self {
         Self(Uuid::new_v4())
@@ -97,7 +103,7 @@ impl std::fmt::Display for SemanticRelationship {
             Self::Hierarchy => write!(f, "hierarchy"),
             Self::Meronymy => write!(f, "meronymy"),
             Self::Causality => write!(f, "causality"),
-            Self::Custom(s) => write!(f, "{}", s),
+            Self::Custom(s) => write!(f, "{s}"),
         }
     }
 }
@@ -220,7 +226,7 @@ impl ConceptGraph {
         threshold: f32,
     ) -> Result<Vec<(NodeId, f32)>> {
         let node = self.graph.get_node(node_id)
-            .ok_or_else(|| ConceptGraphError::ConceptNotFound(node_id))?;
+            .ok_or(ConceptGraphError::ConceptNotFound(node_id))?;
         let position = &node.value.position;
 
         let mut similar_nodes = Vec::new();
