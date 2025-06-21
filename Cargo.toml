@@ -23,3 +23,9 @@ chrono = { version = "0.4", features = ["serde"] }
 [dev-dependencies]
 pretty_assertions = "1.4"
 tokio = { version = "1.0", features = ["full"] }
+async-nats = { version = "0.41", features = ["service"] }
+futures = "0.3"
+
+[[test]]
+name = "infrastructure"
+path = "tests/infrastructure/mod.rs"
