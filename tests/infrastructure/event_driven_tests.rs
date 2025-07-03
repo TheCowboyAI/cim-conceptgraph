@@ -96,7 +96,7 @@ mod layer_1_1_nats_connection {
 
         // Try to delete stream if it exists
         let _ = js.delete_stream("CONCEPT_GRAPH_EVENTS").await;
-        
+
         js.create_stream(stream_config).await?;
 
         // Create concept graph
@@ -120,9 +120,12 @@ mod layer_1_1_nats_connection {
             metadata: HashMap::new(),
         };
 
-        js.publish("conceptgraph.concept.added", serde_json::to_vec(&event)?.into())
-            .await?
-            .await?;
+        js.publish(
+            "conceptgraph.concept.added",
+            serde_json::to_vec(&event)?.into(),
+        )
+        .await?
+        .await?;
 
         // Verify event was published
         let consumer = js
@@ -255,9 +258,12 @@ mod layer_1_1_nats_connection {
             metadata: HashMap::new(),
         };
 
-        js.publish("conceptgraph.region.formed", serde_json::to_vec(&event)?.into())
-            .await?
-            .await?;
+        js.publish(
+            "conceptgraph.region.formed",
+            serde_json::to_vec(&event)?.into(),
+        )
+        .await?
+        .await?;
 
         // Verify
         let consumer = js
@@ -277,7 +283,9 @@ mod layer_1_1_nats_connection {
 
         let received: ConceptGraphEvent = serde_json::from_slice(&msg.payload)?;
         match received.event_type {
-            ConceptGraphEventType::RegionFormed { concept_ids: ids, .. } => {
+            ConceptGraphEventType::RegionFormed {
+                concept_ids: ids, ..
+            } => {
                 assert_eq!(ids.len(), 3);
             }
             _ => panic!("Wrong event type"),
@@ -341,7 +349,7 @@ mod layer_1_2_event_store {
 
         for (i, event) in events.iter().enumerate() {
             js.publish(
-                format!("conceptgraph.events.{}", i),
+                format!("conceptgraph.events.{i}"),
                 serde_json::to_vec(event)?.into(),
             )
             .await?
@@ -359,7 +367,7 @@ mod layer_1_2_event_store {
                 "CONCEPT_EVENTS_STORE",
             )
             .await?;
-        
+
         let mut messages = consumer.messages().await?;
         let mut count = 0;
         while let Ok(Some(msg)) = timeout(Duration::from_millis(100), messages.next()).await {
@@ -396,12 +404,12 @@ mod layer_1_2_event_store {
 
         // Store events
         let concept_ids: Vec<ConceptId> = (0..3).map(|_| ConceptId::new()).collect();
-        
+
         for (i, id) in concept_ids.iter().enumerate() {
             let event = ConceptGraphEvent {
                 event_type: ConceptGraphEventType::ConceptAdded {
                     concept_id: *id,
-                    name: format!("concept_{}", i),
+                    name: format!("concept_{i}"),
                     position: vec![i as f32 * 0.1],
                 },
                 timestamp: chrono::Utc::now(),
@@ -481,7 +489,7 @@ mod layer_1_3_cross_module_events {
 
         // Simulate cross-domain event flow
         let concept_id = ConceptId::new();
-        
+
         // 1. Concept added
         let concept_event = ConceptGraphEvent {
             event_type: ConceptGraphEventType::ConceptAdded {
@@ -504,9 +512,12 @@ mod layer_1_3_cross_module_events {
             "workflow_id": uuid::Uuid::new_v4(),
         });
 
-        js.publish("workflows.created", serde_json::to_vec(&workflow_event)?.into())
-            .await?
-            .await?;
+        js.publish(
+            "workflows.created",
+            serde_json::to_vec(&workflow_event)?.into(),
+        )
+        .await?
+        .await?;
 
         // 3. Which assigns an agent
         let agent_event = serde_json::json!({
@@ -524,14 +535,14 @@ mod layer_1_3_cross_module_events {
             let consumer = js
                 .create_consumer_on_stream(
                     jetstream::consumer::Config {
-                        durable_name: Some(format!("verify_{}", stream_name)),
+                        durable_name: Some(format!("verify_{stream_name}")),
                         deliver_policy: jetstream::consumer::DeliverPolicy::All,
                         ..Default::default()
                     },
                     stream_name,
                 )
                 .await?;
-            
+
             let mut messages = consumer.messages().await?;
             let msg = timeout(Duration::from_millis(100), messages.next())
                 .await?
@@ -588,9 +599,12 @@ mod layer_1_3_cross_module_events {
             timestamp: chrono::Utc::now(),
             metadata: HashMap::new(),
         };
-        js.publish("conceptgraph.similarity.event", serde_json::to_vec(&event1)?.into())
-            .await?
-            .await?;
+        js.publish(
+            "conceptgraph.similarity.event",
+            serde_json::to_vec(&event1)?.into(),
+        )
+        .await?
+        .await?;
         validator.record_event("concept_added");
 
         // Add second concept
@@ -603,9 +617,12 @@ mod layer_1_3_cross_module_events {
             timestamp: chrono::Utc::now(),
             metadata: HashMap::new(),
         };
-        js.publish("conceptgraph.similarity.event", serde_json::to_vec(&event2)?.into())
-            .await?
-            .await?;
+        js.publish(
+            "conceptgraph.similarity.event",
+            serde_json::to_vec(&event2)?.into(),
+        )
+        .await?
+        .await?;
         validator.record_event("concept_added");
 
         // Similarity calculation triggers
@@ -658,7 +675,7 @@ mod test_helpers {
     /// Create a test concept graph with sample data
     pub fn create_test_graph() -> ConceptGraph {
         let mut graph = ConceptGraph::new("test_graph");
-        
+
         let concepts = vec![
             ("machine_learning", vec![0.8, 0.2, 0.1]),
             ("deep_learning", vec![0.9, 0.3, 0.1]),
@@ -673,4 +690,4 @@ mod test_helpers {
 
         graph
     }
-} 
+}

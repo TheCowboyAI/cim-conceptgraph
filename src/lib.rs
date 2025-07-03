@@ -7,10 +7,7 @@
 //! A ConceptGraph represents domain concepts as nodes positioned in conceptual space,
 //! with relationships that have both graph-theoretic and semantic properties.
 
-use cim_contextgraph::{
-    ContextGraph, NodeId, EdgeId,
-    GraphError,
-};
+use cim_contextgraph::{ContextGraph, EdgeId, GraphError, NodeId};
 // TODO: Use these imports once cim-domain-conceptualspaces types are compatible
 // use cim_domain_conceptualspaces::{
 //     ConceptId, ConceptualPoint, ConvexRegion,
@@ -134,7 +131,8 @@ pub trait ConceptualPointExt {
 
 impl ConceptualPointExt for ConceptualPoint {
     fn euclidean_distance(&self, other: &ConceptualPoint) -> f32 {
-        self.coordinates.iter()
+        self.coordinates
+            .iter()
             .zip(&other.coordinates)
             .map(|(a, b)| (a - b).powi(2))
             .sum::<f32>()
@@ -195,7 +193,8 @@ impl ConceptGraph {
             properties: HashMap::new(),
         };
 
-        self.graph.add_edge(source, target, edge)
+        self.graph
+            .add_edge(source, target, edge)
             .map_err(ConceptGraphError::from)
     }
 
@@ -206,7 +205,9 @@ impl ConceptGraph {
 
     /// Find concepts within a region
     pub fn concepts_in_region(&self, region_name: &str) -> Result<Vec<NodeId>> {
-        let region = self.regions.get(region_name)
+        let region = self
+            .regions
+            .get(region_name)
             .ok_or_else(|| ConceptGraphError::RegionNotFound(region_name.to_string()))?;
 
         let mut nodes_in_region = Vec::new();
@@ -225,7 +226,9 @@ impl ConceptGraph {
         node_id: NodeId,
         threshold: f32,
     ) -> Result<Vec<(NodeId, f32)>> {
-        let node = self.graph.get_node(node_id)
+        let node = self
+            .graph
+            .get_node(node_id)
             .ok_or(ConceptGraphError::ConceptNotFound(node_id))?;
         let position = &node.value.position;
 
@@ -245,7 +248,8 @@ impl ConceptGraph {
 
     /// Get a concept by its ConceptId
     pub fn get_concept_by_id(&self, concept_id: ConceptId) -> Option<&ConceptNode> {
-        self.concept_map.get(&concept_id)
+        self.concept_map
+            .get(&concept_id)
             .and_then(|node_id| self.graph.get_node(*node_id))
             .map(|entry| &entry.value)
     }
@@ -272,10 +276,12 @@ impl ConceptGraph {
     pub fn get_node(&self, node_id: NodeId) -> Option<&ConceptNode> {
         self.graph.get_node(node_id).map(|entry| &entry.value)
     }
-    
+
     /// Get an edge by its EdgeId
     pub fn get_edge(&self, edge_id: EdgeId) -> Option<(&ConceptEdge, NodeId, NodeId)> {
-        self.graph.get_edge(edge_id).map(|entry| (&entry.value, entry.source, entry.target))
+        self.graph
+            .get_edge(edge_id)
+            .map(|entry| (&entry.value, entry.source, entry.target))
     }
 }
 
@@ -299,18 +305,14 @@ mod tests {
             coordinates: vec![1.0, 2.0, 3.0],
         };
 
-        let node_id = graph.add_concept(
-            concept_id,
-            position.clone(),
-            "Test Concept".to_string(),
-        );
+        let node_id = graph.add_concept(concept_id, position.clone(), "Test Concept".to_string());
 
         assert_eq!(graph.nodes().len(), 1);
 
         // Verify the node was added with the correct ID
         let nodes = graph.nodes();
         assert_eq!(nodes[0].0, node_id);
-        
+
         // Verify we can retrieve the node by its node_id
         let node = graph.get_node(node_id).unwrap();
         assert_eq!(node.concept_id, concept_id);
@@ -329,34 +331,35 @@ mod tests {
 
         let node1 = graph.add_concept(
             concept1,
-            ConceptualPoint { coordinates: vec![0.0, 0.0] },
+            ConceptualPoint {
+                coordinates: vec![0.0, 0.0],
+            },
             "Concept 1".to_string(),
         );
 
         let node2 = graph.add_concept(
             concept2,
-            ConceptualPoint { coordinates: vec![1.0, 1.0] },
+            ConceptualPoint {
+                coordinates: vec![1.0, 1.0],
+            },
             "Concept 2".to_string(),
         );
 
-        let edge_id = graph.connect_concepts(
-            node1,
-            node2,
-            SemanticRelationship::Similarity,
-            0.8,
-        ).unwrap();
+        let edge_id = graph
+            .connect_concepts(node1, node2, SemanticRelationship::Similarity, 0.8)
+            .unwrap();
 
         assert_eq!(graph.edges().len(), 1);
 
         // Verify the edge was created with the correct ID
         let edges = graph.edges();
         assert_eq!(edges[0].0, edge_id);
-        
+
         // Verify we can retrieve the edge by its edge_id
         let (edge, source, target) = graph.get_edge(edge_id).unwrap();
         assert_eq!(edge.relationship_type, SemanticRelationship::Similarity);
         assert_eq!(edge.strength, 0.8);
-        
+
         // Verify the edge connects the correct nodes
         assert_eq!(source, node1);
         assert_eq!(target, node2);
@@ -369,19 +372,25 @@ mod tests {
         // Add three concepts in a line
         let c1 = graph.add_concept(
             ConceptId::new(),
-            ConceptualPoint { coordinates: vec![0.0, 0.0] },
+            ConceptualPoint {
+                coordinates: vec![0.0, 0.0],
+            },
             "C1".to_string(),
         );
 
         let c2 = graph.add_concept(
             ConceptId::new(),
-            ConceptualPoint { coordinates: vec![1.0, 0.0] },
+            ConceptualPoint {
+                coordinates: vec![1.0, 0.0],
+            },
             "C2".to_string(),
         );
 
         let c3 = graph.add_concept(
             ConceptId::new(),
-            ConceptualPoint { coordinates: vec![3.0, 0.0] },
+            ConceptualPoint {
+                coordinates: vec![3.0, 0.0],
+            },
             "C3".to_string(),
         );
 
@@ -391,17 +400,17 @@ mod tests {
         assert_eq!(similar.len(), 1);
         assert_eq!(similar[0].0, c2);
         assert_eq!(similar[0].1, 1.0);
-        
+
         // Find concepts similar to c2 within distance 2.5
         let similar_to_c2 = graph.find_similar_concepts(c2, 2.5).unwrap();
         assert_eq!(similar_to_c2.len(), 2);
-        
+
         // c1 should be closer than c3
         assert_eq!(similar_to_c2[0].0, c1);
         assert_eq!(similar_to_c2[0].1, 1.0);
         assert_eq!(similar_to_c2[1].0, c3);
         assert_eq!(similar_to_c2[1].1, 2.0);
-        
+
         // Verify c3 is too far from c1
         let similar_to_c1_large = graph.find_similar_concepts(c1, 5.0).unwrap();
         assert_eq!(similar_to_c1_large.len(), 2);
@@ -414,7 +423,9 @@ mod tests {
 
         // Create a region
         let region = ConvexRegion {
-            center: ConceptualPoint { coordinates: vec![0.0, 0.0] },
+            center: ConceptualPoint {
+                coordinates: vec![0.0, 0.0],
+            },
             radius: 2.0,
         };
 
@@ -423,13 +434,17 @@ mod tests {
         // Add concepts inside and outside the region
         let inside = graph.add_concept(
             ConceptId::new(),
-            ConceptualPoint { coordinates: vec![1.0, 1.0] },
+            ConceptualPoint {
+                coordinates: vec![1.0, 1.0],
+            },
             "Inside".to_string(),
         );
 
         let outside = graph.add_concept(
             ConceptId::new(),
-            ConceptualPoint { coordinates: vec![5.0, 5.0] },
+            ConceptualPoint {
+                coordinates: vec![5.0, 5.0],
+            },
             "Outside".to_string(),
         );
 
@@ -437,17 +452,19 @@ mod tests {
 
         assert_eq!(concepts_in_region.len(), 1);
         assert_eq!(concepts_in_region[0], inside);
-        
+
         // Verify the outside node is not in the region
         assert!(!concepts_in_region.contains(&outside));
-        
+
         // Create a larger region that contains both nodes
         let large_region = ConvexRegion {
-            center: ConceptualPoint { coordinates: vec![0.0, 0.0] },
+            center: ConceptualPoint {
+                coordinates: vec![0.0, 0.0],
+            },
             radius: 10.0,
         };
         graph.add_region("LargeRegion".to_string(), large_region);
-        
+
         let concepts_in_large_region = graph.concepts_in_region("LargeRegion").unwrap();
         assert_eq!(concepts_in_large_region.len(), 2);
         assert!(concepts_in_large_region.contains(&inside));

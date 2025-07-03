@@ -18,29 +18,18 @@ fn test_add_concepts_and_relationships() {
     let position1 = ConceptualPoint {
         coordinates: vec![0.0, 0.0, 0.0],
     };
-    let node1 = graph.add_concept(
-        concept1,
-        position1,
-        "Concept 1".to_string(),
-    );
+    let node1 = graph.add_concept(concept1, position1, "Concept 1".to_string());
 
     let concept2 = ConceptId::new();
     let position2 = ConceptualPoint {
         coordinates: vec![1.0, 1.0, 1.0],
     };
-    let node2 = graph.add_concept(
-        concept2,
-        position2,
-        "Concept 2".to_string(),
-    );
+    let node2 = graph.add_concept(concept2, position2, "Concept 2".to_string());
 
     // Add relationship
-    let edge_id = graph.connect_concepts(
-        node1,
-        node2,
-        SemanticRelationship::Similarity,
-        0.8,
-    ).unwrap();
+    let edge_id = graph
+        .connect_concepts(node1, node2, SemanticRelationship::Similarity, 0.8)
+        .unwrap();
 
     // Verify
     assert_eq!(graph.nodes().len(), 2);
@@ -48,6 +37,9 @@ fn test_add_concepts_and_relationships() {
 
     let edges = graph.edges();
     assert_eq!(edges[0].0, edge_id); // Verify the edge ID matches
-    assert_eq!(edges[0].1.relationship_type, SemanticRelationship::Similarity);
+    assert_eq!(
+        edges[0].1.relationship_type,
+        SemanticRelationship::Similarity
+    );
     assert_eq!(edges[0].1.strength, 0.8);
 }
